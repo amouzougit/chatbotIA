@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot IA</title>
+    <!-- Import de la police Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        /* Réinitialisation des marges et paddings par défaut */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #343541;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: #d1d5db;
+        }
+
+        #chat_container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #chat_log {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .message.bot-message .message-content {
+            background-color: #444654;
+            color: #d1d5db;
+        }
+
+        .message.user-message {
+            justify-content: flex-end;
+        }
+
+        .message.user-message .message-content {
+            background-color: #056162;
+            color: #ffffff;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        #chat_form {
+            display: flex;
+            padding: 10px 20px;
+            background-color: #40414f;
+        }
+
+        #user_input {
+            flex: 1;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #555770;
+            color: #ffffff;
+            resize: none;
+            height: 50px;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+
+        #user_input:focus {
+            outline: none;
+        }
+
+        #submit_button {
+            margin-left: 10px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            color: #ffffff;
+            font-size: 24px;
+        }
+
+        #submit_button:disabled {
+            color: #888888;
+            cursor: not-allowed;
+        }
+
+        /* Barre de navigation */
+        #navbar {
+            background-color: #202123;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #52525b;
+        }
+
+        #navbar h1 {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: normal;
+        }
+
+        /* Barre de défilement personnalisée */
+        #chat_log::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat_log::-webkit-scrollbar-thumb {
+            background-color: #52525b;
+            border-radius: 4px;
+        }
+
+        #typing-indicator {
+            display: none;
+            padding: 10px 15px;
+            font-style: italic;
+            color: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <div id="navbar">
+        <h1>Chatbot AI</h1>
+    </div>
+
+    <!-- Conteneur de chat -->
+    <div id="chat_container">
+        <div id="chat_log">
+            <div class="message bot-message">
+                <div class="message-content">Welcome to your medical assistant chatbot!</div>
+            </div>
+            <div id="typing-indicator">The chatbot is typing...</div>
+        </div>
+        <form id="chat_form" method="post">
+            <textarea id="user_input" autocomplete="off" placeholder="Tapez votre message..."></textarea>
+            <button type="submit" id="submit_button">&#10148;</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Ajustement de la hauteur du textarea
+            function adjustTextareaHeight() {
+                var textarea = $('#user_input');
+                textarea.css('height', 'auto');
+                textarea.css('height', textarea.prop('scrollHeight') + 'px');
+                scrollToBottom();
+            }
+
+            $('#user_input').on('input', function () {
+                adjustTextareaHeight();
+            });
+
+            // Envoi du message utilisateur
+            $('#chat_form').on('submit', function (event) {
+                event.preventDefault();
+                var userMessage = $('#user_input').val().trim();
+                if (userMessage !== '') {
+                    addMessage('user', userMessage);
+                    sendMessage(userMessage);
+                    $('#user_input').val('');
+                    adjustTextareaHeight();
+                }
+            });
+
+            // Fonction pour ajouter un message au chat log
+            function addMessage(sender, message) {
+                var messageElement = $('<div class="message ' + sender + '-message"></div>');
+                var messageContent = $('<div class="message-content"></div>').text(message);
+                messageElement.append(messageContent);
+                $('#chat_log').append(messageElement);
+                scrollToBottom();
+            }
+
+            // Fonction pour défiler jusqu'en bas du chat
+            function scrollToBottom() {
+                $('#chat_log').scrollTop($('#chat_log')[0].scrollHeight);
+            }
+
+            // Affichage et masquage de l'indicateur de saisie
+            function showTypingIndicator() {
+                $('#typing-indicator').show();
+                scrollToBottom();
+            }
+
+            function hideTypingIndicator() {
+                $('#typing-indicator').hide();
+            }
+
+            // Envoi du message au serveur
+            function sendMessage(message) {
+                showTypingIndicator();
+                $.ajax({
+                    type: 'POST',
+                    url: '/chat',
+                    data: { user_input: message },
+                    success: function (response) {
+                        hideTypingIndicator();
+                        typeEffect(response.response, 20);
+                    },
+                    error: function () {
+                        hideTypingIndicator();
+                        addMessage('bot', 'Désolé, une erreur s\'est produite.');
+                    }
+                });
+            }
+
+            // Effet de saisie pour les réponses du bot
+            function typeEffect(text, speed) {
+                let i = 0;
+                let messageElement = $('<div class="message bot-message"><div class="message-content"></div></div>');
+                $('#chat_log').append(messageElement);
+                let messageContent = messageElement.find('.message-content');
+
+                let timer = setInterval(function () {
+                    if (i < text.length) {
+                        messageContent.append(text.charAt(i));
+                        i++;
+                        scrollToBottom();
+                    } else {
+                        clearInterval(timer);
+                    }
+                }, speed);
+            }
+
+            // Désactiver le bouton d'envoi si le textarea est vide
+            $('#user_input').on('input', function () {
+                if ($(this).val().trim() === '') {
+                    $('#submit_button').attr('disabled', true);
+                } else {
+                    $('#submit_button').attr('disabled', false);
+                }
+            }).trigger('input'); // Vérifier au chargement
+
+            // Ajustement initial
+            adjustTextareaHeight();
+        });
+    </script>
+</body>
+</html>
