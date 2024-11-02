@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-# chatbotIA
-=======
-# Horoscope-Chatbot
-This is chatbot for you to chat with seer who knows your fate. This version only works with saggitarius.
+# Chatbot IA pour l'Éducation Thérapeutique des Patients
 
-To start this application:
-Run
-```
-streamlit run steamlit.py
-```
+Ce chatbot est conçu pour aider les patients à mieux comprendre leur santé et à recevoir des conseils adaptés pour leur bien-être.
+
+
+
